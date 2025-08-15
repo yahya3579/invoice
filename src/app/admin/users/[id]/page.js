@@ -557,7 +557,7 @@ export default function EditUserPage() {
               Recent Login History
             </CardTitle>
             <CardDescription>
-              User's recent login activity
+              User&apos;s recent login activity
             </CardDescription>
           </CardHeader>
           <CardContent>

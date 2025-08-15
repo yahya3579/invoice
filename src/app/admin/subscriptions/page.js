@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { 
   Search, 
   CreditCard, 
@@ -137,7 +137,7 @@ export default function SubscriptionsPage() {
     totalPages: 0
   });
 
-  const fetchSubscriptionData = async () => {
+  const fetchSubscriptionData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -163,7 +163,7 @@ export default function SubscriptionsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [pagination.page, statusFilter, planFilter]);
 
   const statusOptions = [
     { value: "all", label: "All Status" },

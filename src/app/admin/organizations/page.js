@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { 
   Search, 
   Building2, 
@@ -109,7 +109,7 @@ export default function OrganizationsPage() {
   });
   const [totals, setTotals] = useState({ totalRevenueAll: 0, totalInvoicesAll: 0 });
 
-  const fetchOrganizations = async () => {
+  const fetchOrganizations = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -141,7 +141,7 @@ export default function OrganizationsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [pagination.page, statusFilter, subscriptionFilter]);
 
   const handleDeleteOrganization = async (orgId, orgName) => {
     if (!confirm(`Are you sure you want to delete organization "${orgName}"? This action cannot be undone.`)) {

@@ -187,7 +187,7 @@ function Footer() {
               </div>
 
               <div className="text-sm text-gray-600 max-w-2xl">
-                <span className="font-semibold">* Disclaimer :</span> There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don't look even slightly believable. If you are going to use a passage of Lorem Ipsum, you need to be sure there isn't anything embarrassing
+                <span className="font-semibold">* Disclaimer :</span> There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don&apos;t look even slightly believable. If you are going to use a passage of Lorem Ipsum, you need to be sure there isn&apos;t anything embarrassing
               </div>
             </div>
 
@@ -414,7 +414,7 @@ function HeroSection() {
                 </div>
                 
                 <div className="space-y-3">
-                  <div className="text-sm font-medium text-gray-700">Today's Tasks</div>
+                  <div className="text-sm font-medium text-gray-700">Today&apos;s Tasks</div>
                   <div className="flex items-center space-x-2">
                     <div className="w-8 h-8 bg-green-500 rounded-full"></div>
                     <div>

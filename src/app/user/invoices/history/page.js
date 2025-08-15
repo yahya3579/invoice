@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -13,7 +13,7 @@ export default function InvoiceHistoryPage() {
   const [data, setData] = useState({ rows: [], total: 0, page: 1, limit: 10 });
   const [loading, setLoading] = useState(false);
 
-  const load = async (page = 1) => {
+  const load = useCallback(async (page = 1) => {
     setLoading(true);
     try {
       const res = await invoiceApi.list({ page, limit: data.limit, search, status });
@@ -21,9 +21,9 @@ export default function InvoiceHistoryPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [search, status, data.limit]);
 
-  useEffect(() => { load(1); }, []);
+  useEffect(() => { load(1); }, [load]);
 
   return (
     <div className="space-y-4">

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { uploadApi, invoiceApi } from "@/lib/api";
 import { Upload } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
+import Link from "next/link";
 
 export default function BulkUploadPage() {
   const [rows, setRows] = useState([]);
@@ -132,7 +133,7 @@ export default function BulkUploadPage() {
               {creating ? 'Creating...' : 'Create Invoices'}
             </Button>
           </div>
-          <div className="text-sm text-gray-600">Parsed rows: {rows.length} · <a className="text-blue-600 hover:underline" href="/user/invoices/bulk-upload/template">View template details</a></div>
+          <div className="text-sm text-gray-600">Parsed rows: {rows.length} · <Link className="text-blue-600 hover:underline" href="/user/invoices/bulk-upload/template">View template details</Link></div>
         </CardContent>
       </Card>
     </div>

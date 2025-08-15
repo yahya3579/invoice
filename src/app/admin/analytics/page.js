@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { 
   Calendar, 
   Download, 
@@ -126,7 +126,7 @@ export default function AnalyticsPage() {
     { value: "1year", label: "Last Year" },
   ];
 
-  const fetchAnalyticsData = async () => {
+  const fetchAnalyticsData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -237,7 +237,7 @@ export default function AnalyticsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [timeRange, selectedMetric]);
 
   useEffect(() => {
     fetchAnalyticsData();

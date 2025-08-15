@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { 
   Search, 
   Filter, 
@@ -125,7 +125,7 @@ export default function UsersPage() {
     totalPages: 0
   });
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -151,7 +151,7 @@ export default function UsersPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [pagination.page, statusFilter]);
 
   const handleDeleteUser = async (userId, userName) => {
     if (!confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {

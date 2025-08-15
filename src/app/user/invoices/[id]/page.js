@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,15 +50,15 @@ export default function ViewInvoicePage() {
       );
     });
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await invoiceApi.get(id);
       setInvoice(res.data || null);
     } finally { setLoading(false); }
-  };
+  }, [id]);
 
-  useEffect(() => { if (id) load(); }, [id]);
+  useEffect(() => { if (id) load(); }, [id, load]);
 
   const handleRegisterFBR = async () => {
     if (!invoice) return;

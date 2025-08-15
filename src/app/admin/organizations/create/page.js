@@ -229,7 +229,7 @@ export default function CreateOrganizationPage() {
               Contact Information
             </CardTitle>
             <CardDescription>
-              Organization's contact details
+              Organization&apos;s contact details
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
