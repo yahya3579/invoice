@@ -1,0 +1,181 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 Int       @id @default(autoincrement())
+  email              String    @unique @db.VarChar(255)
+  password           String    @db.VarChar(255)
+  originalPassword   String?   @db.VarChar(255) @map("original_password")
+  name               String    @db.VarChar(255)
+  role               UserRole  @default(user)
+  organizationId     Int?
+  fbrApiToken        String?   @db.Text
+  isActive           Boolean   @default(true) @map("is_active")
+  subscriptionStatus SubscriptionStatus @default(inactive) @map("subscription_status")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  
+  // Relations
+  organization       Organization? @relation(fields: [organizationId], references: [id])
+  invoices          Invoice[]
+  errorLogs         ErrorLog[]
+  profile           UserProfile?
+  
+  @@map("users")
+}
+
+model Organization {
+  id                    Int       @id @default(autoincrement())
+  name                  String    @db.VarChar(255)
+  ntn                   String    @unique @db.VarChar(50)
+  address               String    @db.Text
+  phone                 String?   @db.VarChar(20)
+  email                 String?   @db.VarChar(255)
+  businessType          BusinessType @map("business_type")
+  subscriptionPlan      String?   @db.VarChar(100) @map("subscription_plan")
+  subscriptionExpiresAt DateTime? @map("subscription_expires_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  
+  // Relations
+  users                 User[]
+  invoices              Invoice[]
+  
+  @@map("organizations")
+}
+
+model Invoice {
+  id              Int           @id @default(autoincrement())
+  userId          Int           @map("user_id")
+  organizationId  Int           @map("organization_id")
+  invoiceNumber   String?       @db.VarChar(100) @map("invoice_number")
+  irn             String?       @unique @db.VarChar(255)
+  buyerName       String        @db.VarChar(255) @map("buyer_name")
+  buyerNtn        String?       @db.VarChar(50) @map("buyer_ntn")
+  buyerAddress    String?       @db.Text @map("buyer_address")
+  // New buyer fields
+  buyerNtnCnic            String?   @db.VarChar(100) @map("buyer_ntn_cnic")
+  buyerBusinessName       String?   @db.VarChar(255) @map("buyer_business_name")
+  buyerProvince           String?   @db.VarChar(100) @map("buyer_province")
+  buyerRegistrationType   String?   @db.VarChar(100) @map("buyer_registration_type")
+  invoiceRefNo            String?   @db.VarChar(255) @map("invoice_ref_no")
+  scenarioId              String?   @db.VarChar(50)  @map("scenario_id")
+  invoiceDate     DateTime      @map("invoice_date")
+  dueDate         DateTime?     @map("due_date")
+  subtotal        Decimal       @db.Decimal(15, 2)
+  taxAmount       Decimal       @db.Decimal(15, 2) @map("tax_amount")
+  totalAmount     Decimal       @db.Decimal(15, 2) @map("total_amount")
+  currency        String        @default("PKR") @db.VarChar(3)
+  status          InvoiceStatus @default(draft)
+  fbrResponse     Json?         @map("fbr_response")
+  pdfPath         String?       @db.VarChar(500) @map("pdf_path")
+  qrCode          String?       @db.Text @map("qr_code")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  
+  // Relations
+  user            User          @relation(fields: [userId], references: [id])
+  organization    Organization  @relation(fields: [organizationId], references: [id])
+  items           InvoiceItem[]
+  
+  @@index([invoiceDate], map: "idx_invoice_date")
+  @@index([buyerNtn], map: "idx_buyer_ntn")
+  @@index([irn], map: "idx_irn")
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id              Int      @id @default(autoincrement())
+  invoiceId       Int      @map("invoice_id")
+  itemDescription String   @db.Text @map("item_description")
+  hsCode          String?  @db.VarChar(20) @map("hs_code")
+  productDescription String? @db.Text @map("product_description")
+  rate            String?  @db.VarChar(20)
+  uom             String?  @db.VarChar(100) @map("uom")
+  quantity        Decimal  @default(1) @db.Decimal(10, 2)
+  unitPrice       Decimal  @db.Decimal(15, 2) @map("unit_price")
+  valueSalesExcludingST Decimal? @db.Decimal(15, 2) @map("value_sales_excluding_st")
+  totalValues     Decimal? @db.Decimal(15, 2) @map("total_values")
+  fixedNotifiedValueOrRetailPrice Decimal? @db.Decimal(15, 2) @map("fixed_notified_value_or_retail_price")
+  salesTaxApplicable Decimal? @db.Decimal(5, 2) @map("sales_tax_applicable")
+  salesTaxWithheldAtSource Decimal? @db.Decimal(15, 2) @map("sales_tax_withheld_at_source")
+  extraTax        String?  @db.VarChar(50) @map("extra_tax")
+  furtherTax      Decimal? @db.Decimal(15, 2) @map("further_tax")
+  sroScheduleNo   String?  @db.VarChar(50) @map("sro_schedule_no")
+  fedPayable      Decimal? @db.Decimal(15, 2) @map("fed_payable")
+  discount        Decimal? @db.Decimal(15, 2)
+  saleType        String?  @db.VarChar(255) @map("sale_type")
+  sroItemSerialNo String?  @db.VarChar(50) @map("sro_item_serial_no")
+  taxRate         Decimal  @db.Decimal(5, 2) @map("tax_rate")
+  taxAmount       Decimal  @db.Decimal(15, 2) @map("tax_amount")
+  totalAmount     Decimal  @db.Decimal(15, 2) @map("total_amount")
+  createdAt       DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  invoice         Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  
+  @@map("invoice_items")
+}
+
+model ErrorLog {
+  id           Int      @id @default(autoincrement())
+  userId       Int?     @map("user_id")
+  errorCode    String?  @db.VarChar(50) @map("error_code")
+  errorMessage String?  @db.Text @map("error_message")
+  errorContext Json?    @map("error_context")
+  createdAt    DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  user         User?    @relation(fields: [userId], references: [id])
+  
+  @@map("error_logs")
+}
+
+enum UserRole {
+  admin
+  user
+}
+
+enum BusinessType {
+  product
+  service
+}
+
+enum SubscriptionStatus {
+  active
+  inactive
+  expired
+}
+
+enum InvoiceStatus {
+  draft
+  registered
+  failed
+} 
+
+model UserProfile {
+  id                 Int       @id @default(autoincrement())
+  userId             Int       @unique @map("user_id")
+  invoiceType        String?   @db.VarChar(100) @map("invoice_type")
+  invoiceDate        DateTime? @map("invoice_date")
+  sellerNTNCNIC      String?   @db.VarChar(100) @map("seller_ntn_cnic")
+  sellerBusinessName String?   @db.VarChar(255) @map("seller_business_name")
+  sellerProvince     String?   @db.VarChar(100) @map("seller_province")
+  sellerAddress      String?   @db.Text @map("seller_address")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("user_profiles")
+}
