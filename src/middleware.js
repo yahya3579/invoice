@@ -22,37 +22,37 @@ function decodeJwtRole(token) {
 }
 
 export function middleware(req) {
-  const { pathname } = req.nextUrl;
-  const token = req.cookies.get(COOKIE_NAME)?.value;
-  const isAuthenticated = Boolean(token);
-  const isProtected = pathname.startsWith("/admin") || pathname.startsWith("/user");
-  const isLogin = pathname === "/login";
+  // const { pathname } = req.nextUrl;
+  // const token = req.cookies.get(COOKIE_NAME)?.value;
+  // const isAuthenticated = Boolean(token);
+  // const isProtected = pathname.startsWith("/admin") || pathname.startsWith("/user");
+  // const isLogin = pathname === "/login";
 
-  // If accessing protected routes without auth → redirect to login
-  if (isProtected && !isAuthenticated) {
-    const loginUrl = req.nextUrl.clone();
-    loginUrl.pathname = "/login";
-    loginUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
+  // // If accessing protected routes without auth → redirect to login
+  // if (isProtected && !isAuthenticated) {
+  //   const loginUrl = req.nextUrl.clone();
+  //   loginUrl.pathname = "/login";
+  //   loginUrl.searchParams.set("next", pathname);
+  //   return NextResponse.redirect(loginUrl);
+  // }
 
-  // If on /login and already authenticated → send to role dashboard
-  if (isLogin && isAuthenticated) {
-    const role = decodeJwtRole(token);
-    const redirectUrl = req.nextUrl.clone();
-    redirectUrl.pathname = role === "admin" ? "/admin" : "/user";
-    return NextResponse.redirect(redirectUrl);
-  }
+  // // If on /login and already authenticated → send to role dashboard
+  // if (isLogin && isAuthenticated) {
+  //   const role = decodeJwtRole(token);
+  //   const redirectUrl = req.nextUrl.clone();
+  //   redirectUrl.pathname = role === "admin" ? "/admin" : "/user";
+  //   return NextResponse.redirect(redirectUrl);
+  // }
 
-  // Enforce admin-only access to /admin
-  if (pathname.startsWith("/admin") && isAuthenticated) {
-    const role = decodeJwtRole(token);
-    if (role !== "admin") {
-      const url = req.nextUrl.clone();
-      url.pathname = "/user";
-      return NextResponse.redirect(url);
-    }
-  }
+  // // Enforce admin-only access to /admin
+  // if (pathname.startsWith("/admin") && isAuthenticated) {
+  //   const role = decodeJwtRole(token);
+  //   if (role !== "admin") {
+  //     const url = req.nextUrl.clone();
+  //     url.pathname = "/user";
+  //     return NextResponse.redirect(url);
+  //   }
+  // }
 
   return NextResponse.next();
 }

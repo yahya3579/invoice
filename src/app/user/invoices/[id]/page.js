@@ -810,7 +810,7 @@ export default function ViewInvoicePage() {
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <div className="text-lg font-medium">No items found</div>
-                  <div className="text-sm">This invoice doesn't have any items yet.</div>
+                                            <div className="text-sm">This invoice doesn&apos;t have any items yet.</div>
                 </div>
               )}
             </div>
@@ -837,7 +837,7 @@ export default function ViewInvoicePage() {
                             <li>Request FBR API token configuration</li>
                             <li>Provide your FBR account credentials</li>
                             <li>Wait for token to be configured</li>
-                            <li>Click "Refresh Token" button below</li>
+                            <li>Click &quot;Refresh Token&quot; button below</li>
                             <li>Or refresh this page after configuration</li>
                           </ul>
                         </div>
