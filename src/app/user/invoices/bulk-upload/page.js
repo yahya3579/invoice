@@ -55,6 +55,18 @@ export default function BulkUploadPage() {
     try {
       // Map simple columns to API shape; expects items combined per row with defaults
       const invoices = rows.map((r) => ({
+        // Invoice level fields (required for FBR)
+        invoiceNumber: r.invoiceNumber || "",
+        invoiceType: r.invoiceType || "",
+        sroScheduleNo: r.sroScheduleNo || "",
+        salesTaxWithheldAtSource: Number(r.salesTaxWithheldAtSource || 0),
+        furtherTax: Number(r.furtherTax || 0),
+        fixedNotifiedValueOrRetailPrice: Number(r.fixedNotifiedValueOrRetailPrice || 0),
+        currency: r.currency || "PKR",
+        invoiceDate: r.invoiceDate ? new Date(r.invoiceDate) : new Date(),
+        dueDate: r.dueDate ? new Date(r.dueDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+        
+        // Buyer information
         buyerNTNCNIC: r.buyerNTNCNIC,
         buyerBusinessName: r.buyerBusinessName,
         buyerProvince: r.buyerProvince || "",
@@ -62,6 +74,7 @@ export default function BulkUploadPage() {
         buyerRegistrationType: r.buyerRegistrationType || "",
         invoiceRefNo: r.invoiceRefNo || "",
         scenarioId: r.scenarioId || "SN001",
+        
         items: [
           {
             hsCode: r.hsCode || "",
@@ -134,6 +147,16 @@ export default function BulkUploadPage() {
             </Button>
           </div>
           <div className="text-sm text-gray-600">Parsed rows: {rows.length} · <Link className="text-blue-600 hover:underline" href="/user/invoices/bulk-upload/template">View template details</Link></div>
+          
+          {/* FBR Required Fields Information */}
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <div className="text-sm font-medium text-blue-800 mb-2">FBR Required Fields for Bulk Upload:</div>
+            <div className="text-xs text-blue-700 space-y-1">
+              <div><strong>Invoice Level:</strong> invoiceNumber, invoiceType, sroScheduleNo, salesTaxWithheldAtSource, furtherTax, fixedNotifiedValueOrRetailPrice, currency, invoiceDate, dueDate</div>
+              <div><strong>Buyer Info:</strong> buyerNTNCNIC, buyerBusinessName, buyerProvince, buyerAddress, buyerRegistrationType</div>
+              <div><strong>Item Level:</strong> hsCode, productDescription, rate, uoM, quantity, valueSalesExcludingST, salesTaxApplicable, sroItemSerialNo</div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

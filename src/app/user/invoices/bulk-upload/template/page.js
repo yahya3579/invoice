@@ -1,5 +1,17 @@
 export default function BulkTemplateInfo() {
   const headers = [
+    // Invoice level fields (required for FBR)
+    'invoiceNumber',
+    'invoiceType',
+    'sroScheduleNo',
+    'salesTaxWithheldAtSource',
+    'furtherTax',
+    'fixedNotifiedValueOrRetailPrice',
+    'currency',
+    'invoiceDate',
+    'dueDate',
+    
+    // Buyer information
     'buyerNTNCNIC',
     'buyerBusinessName',
     'buyerProvince',
@@ -7,6 +19,8 @@ export default function BulkTemplateInfo() {
     'buyerRegistrationType',
     'invoiceRefNo',
     'scenarioId',
+    
+    // Item level fields
     'hsCode',
     'productDescription',
     'rate',
@@ -14,12 +28,8 @@ export default function BulkTemplateInfo() {
     'quantity',
     'totalValues',
     'valueSalesExcludingST',
-    'fixedNotifiedValueOrRetailPrice',
     'salesTaxApplicable',
-    'salesTaxWithheldAtSource',
     'extraTax',
-    'furtherTax',
-    'sroScheduleNo',
     'fedPayable',
     'discount',
     'saleType',
@@ -38,8 +48,10 @@ export default function BulkTemplateInfo() {
         <div className="text-sm text-gray-600">
           Notes:
           <ul className="list-disc list-inside">
-            <li>Each row represents one item of an invoice. Repeat buyer fields for additional items of the same invoice.</li>
+            <li>Each row represents one item of an invoice. Repeat buyer and invoice fields for additional items of the same invoice.</li>
+            <li><strong>Required for FBR:</strong> invoiceNumber, invoiceType, sroScheduleNo, salesTaxWithheldAtSource, furtherTax, fixedNotifiedValueOrRetailPrice, currency, invoiceDate, dueDate</li>
             <li>Numeric fields (quantity, valueSalesExcludingST, totalValues, fixedNotifiedValueOrRetailPrice, salesTaxApplicable, salesTaxWithheldAtSource, furtherTax, fedPayable, discount) must be numeric.</li>
+            <li>Date fields (invoiceDate, dueDate) should be in YYYY-MM-DD format.</li>
             <li>Leave optional fields empty if not applicable.</li>
           </ul>
         </div>
