@@ -159,6 +159,7 @@ export const authApi = {
   login: (payload) => apiRequest('/auth/login', { method: 'POST', body: JSON.stringify(payload) }),
   logout: () => apiRequest('/auth/logout', { method: 'POST' }),
   session: () => apiRequest('/auth/session'),
+  refresh: () => apiRequest('/auth/refresh', { method: 'POST' }),
 };
 
 export const invoiceApi = {
@@ -182,6 +183,8 @@ export const fbrApi = {
   validate: (invoice) => apiRequest('/fbr/validate', { method: 'POST', body: JSON.stringify({ invoice }) }),
   register: (invoiceId) => apiRequest('/fbr/register', { method: 'POST', body: JSON.stringify({ invoiceId }) }),
   status: (irn) => apiRequest(`/fbr/status/${irn}`),
+  checkToken: () => apiRequest('/fbr/check-token'),
+  getErrorCodes: (codes) => apiRequest(`/fbr/error-codes${codes ? `?codes=${codes}` : ''}`),
 };
 
 export const uploadApi = {

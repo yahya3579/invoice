@@ -38,6 +38,7 @@ model Organization {
   name                  String    @db.VarChar(255)
   ntn                   String    @unique @db.VarChar(50)
   address               String    @db.Text
+  province              String?   @db.VarChar(100)
   phone                 String?   @db.VarChar(20)
   email                 String?   @db.VarChar(255)
   businessType          BusinessType @map("business_type")
@@ -69,6 +70,12 @@ model Invoice {
   buyerRegistrationType   String?   @db.VarChar(100) @map("buyer_registration_type")
   invoiceRefNo            String?   @db.VarChar(255) @map("invoice_ref_no")
   scenarioId              String?   @db.VarChar(50)  @map("scenario_id")
+  // FBR-specific fields
+  invoiceType             String?   @db.VarChar(100) @map("invoice_type")
+  sroScheduleNo           String?   @db.VarChar(50) @map("sro_schedule_no")
+  salesTaxWithheldAtSource Decimal? @db.Decimal(15, 2) @map("sales_tax_withheld_at_source")
+  furtherTax              Decimal? @db.Decimal(15, 2) @map("further_tax")
+  fixedNotifiedValueOrRetailPrice Decimal? @db.Decimal(15, 2) @map("fixed_notified_value_or_retail_price")
   invoiceDate     DateTime      @map("invoice_date")
   dueDate         DateTime?     @map("due_date")
   subtotal        Decimal       @db.Decimal(15, 2)
@@ -77,6 +84,8 @@ model Invoice {
   currency        String        @default("PKR") @db.VarChar(3)
   status          InvoiceStatus @default(draft)
   fbrResponse     Json?         @map("fbr_response")
+  fbrErrorCode    String?       @db.VarChar(50) @map("fbr_error_code")
+  fbrErrorMessage String?       @db.Text @map("fbr_error_message")
   pdfPath         String?       @db.VarChar(500) @map("pdf_path")
   qrCode          String?       @db.Text @map("qr_code")
   createdAt       DateTime      @default(now()) @map("created_at")
@@ -86,10 +95,12 @@ model Invoice {
   user            User          @relation(fields: [userId], references: [id])
   organization    Organization  @relation(fields: [organizationId], references: [id])
   items           InvoiceItem[]
+  fbrError        FbrErrorCode? @relation(fields: [fbrErrorCode], references: [code])
   
   @@index([invoiceDate], map: "idx_invoice_date")
   @@index([buyerNtn], map: "idx_buyer_ntn")
   @@index([irn], map: "idx_irn")
+  @@index([fbrErrorCode], map: "idx_fbr_error_code")
   @@map("invoices")
 }
 
@@ -99,7 +110,7 @@ model InvoiceItem {
   itemDescription String   @db.Text @map("item_description")
   hsCode          String?  @db.VarChar(20) @map("hs_code")
   productDescription String? @db.Text @map("product_description")
-  rate            String?  @db.VarChar(20)
+  rate            Decimal? @db.Decimal(15, 2)
   uom             String?  @db.VarChar(100) @map("uom")
   quantity        Decimal  @default(1) @db.Decimal(10, 2)
   unitPrice       Decimal  @db.Decimal(15, 2) @map("unit_price")
@@ -138,6 +149,21 @@ model ErrorLog {
   user         User?    @relation(fields: [userId], references: [id])
   
   @@map("error_logs")
+}
+
+model FbrErrorCode {
+  code              String   @id @db.VarChar(50)
+  message           String   @db.Text
+  briefDescription  String   @db.Text @map("brief_description")
+  category          String   @db.VarChar(50) @default("sales") // sales, purchase
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  invoices          Invoice[]
+  
+  @@map("fbr_error_codes")
 }
 
 enum UserRole {

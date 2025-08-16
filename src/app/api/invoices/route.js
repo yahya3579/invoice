@@ -84,11 +84,23 @@ export async function GET(req) {
 
 // POST /api/invoices - Create single invoice
 export async function POST(req) {
+  console.log('POST /api/invoices called');
   const auth = requireAuth(req);
   if (auth.error) return auth.error;
   const user = auth.user;
+  console.log('User authenticated:', user.id, 'Organization:', user.organizationId);
   try {
     const body = await req.json();
+    console.log('Request body:', JSON.stringify(body, null, 2));
+    console.log('Extracted fields:');
+    console.log('- invoiceNumber:', body.invoiceNumber);
+    console.log('- invoiceType:', body.invoiceType);
+    console.log('- sroScheduleNo:', body.sroScheduleNo);
+    console.log('- salesTaxWithheldAtSource:', body.salesTaxWithheldAtSource);
+    console.log('- furtherTax:', body.furtherTax);
+    console.log('- fixedNotifiedValueOrRetailPrice:', body.fixedNotifiedValueOrRetailPrice);
+    console.log('- dueDate:', body.dueDate);
+    
     const {
       buyerNTNCNIC,
       buyerBusinessName,
@@ -97,6 +109,16 @@ export async function POST(req) {
       buyerRegistrationType,
       invoiceRefNo,
       scenarioId,
+      invoiceNumber,
+      irn,
+      invoiceType,
+      sroScheduleNo,
+      salesTaxWithheldAtSource,
+      furtherTax,
+      fixedNotifiedValueOrRetailPrice,
+      currency,
+      invoiceDate,
+      dueDate,
       items = [],
     } = body;
 
@@ -123,7 +145,7 @@ export async function POST(req) {
         hsCode: item.hsCode || null,
         productDescription: item.productDescription || null,
         rate: item.rate || null,
-        uom: item.uoM || null,
+        uom: item.uom || null,
         quantity,
         unitPrice: valueSalesExcludingST,
         valueSalesExcludingST: itemSubtotal,
@@ -149,23 +171,46 @@ export async function POST(req) {
       return NextResponse.json({ error: "User is not linked to an organization" }, { status: 400 });
     }
 
+    console.log('About to create invoice with data:', {
+      userId: user.id,
+      organizationId,
+      invoiceNumber,
+      invoiceType,
+      sroScheduleNo,
+      salesTaxWithheldAtSource,
+      furtherTax,
+      fixedNotifiedValueOrRetailPrice,
+      dueDate,
+      subtotal,
+      taxAmount,
+      totalAmount,
+      itemCount: normalizedItems.length
+    });
+
     const created = await prisma.invoice.create({
       data: {
         userId: user.id,
         organizationId,
-        invoiceNumber: null,
+        invoiceNumber: invoiceNumber && invoiceNumber.trim() !== '' ? invoiceNumber : null,
+        irn: irn && irn.trim() !== '' ? irn : null,
         buyerName: buyerBusinessName,
-        buyerNtn: buyerNTNCNIC || null,
-        buyerAddress: buyerAddress || null,
-        invoiceDate: new Date(),
-        dueDate: null,
-        currency: "PKR",
-        buyerNtnCnic: buyerNTNCNIC || null,
+        buyerNtn: buyerNTNCNIC && buyerNTNCNIC.trim() !== '' ? buyerNTNCNIC : null,
+        buyerAddress: buyerAddress && buyerAddress.trim() !== '' ? buyerAddress : null,
+        invoiceDate: invoiceDate ? new Date(invoiceDate) : new Date(),
+        dueDate: dueDate && dueDate.trim() !== '' ? new Date(dueDate) : null,
+        currency: currency || "PKR",
+        buyerNtnCnic: buyerNTNCNIC && buyerNTNCNIC.trim() !== '' ? buyerNTNCNIC : null,
         buyerBusinessName: buyerBusinessName || null,
-        buyerProvince: buyerProvince || null,
-        buyerRegistrationType: buyerRegistrationType || null,
-        invoiceRefNo: invoiceRefNo || null,
-        scenarioId: scenarioId || null,
+        buyerProvince: buyerProvince && buyerProvince.trim() !== '' ? buyerProvince : null,
+        buyerRegistrationType: buyerRegistrationType && buyerRegistrationType.trim() !== '' ? buyerRegistrationType : null,
+        invoiceRefNo: invoiceRefNo && invoiceRefNo.trim() !== '' ? invoiceRefNo : null,
+        scenarioId: scenarioId && scenarioId.trim() !== '' ? scenarioId : null,
+        // FBR-specific fields - ensure proper mapping
+        invoiceType: invoiceType && invoiceType.trim() !== '' ? invoiceType : null,
+        sroScheduleNo: sroScheduleNo && sroScheduleNo.trim() !== '' ? sroScheduleNo : null,
+        salesTaxWithheldAtSource: salesTaxWithheldAtSource && salesTaxWithheldAtSource !== '' ? parseFloat(salesTaxWithheldAtSource) : null,
+        furtherTax: furtherTax && furtherTax !== '' ? parseFloat(furtherTax) : null,
+        fixedNotifiedValueOrRetailPrice: fixedNotifiedValueOrRetailPrice && fixedNotifiedValueOrRetailPrice !== '' ? parseFloat(fixedNotifiedValueOrRetailPrice) : null,
         subtotal,
         taxAmount,
         totalAmount,
@@ -179,7 +224,12 @@ export async function POST(req) {
 
     return NextResponse.json({ success: true, data: created }, { status: 201 });
   } catch (e) {
-    return NextResponse.json({ success: false, error: "Failed to create invoice" }, { status: 500 });
+    console.error('Error creating invoice:', e);
+    return NextResponse.json({ 
+      success: false, 
+      error: "Failed to create invoice", 
+      details: e.message || 'Unknown error'
+    }, { status: 500 });
   }
 }
 

@@ -62,7 +62,9 @@ export async function POST(req) {
       name: user.name,
       role: user.role,
       organizationId: user.organizationId,
+      fbrApiToken: user.fbrApiToken || null, // Include FBR token in JWT
     }, JWT_SECRET, { expiresIn: "7d" });
+    
     // Set cookie
     const res = NextResponse.json({
       user: {
@@ -71,6 +73,7 @@ export async function POST(req) {
         name: user.name,
         role: user.role,
         organizationId: user.organizationId,
+        fbrApiToken: user.fbrApiToken || null, // Include FBR token in response
       },
       message: "Login successful."
     });

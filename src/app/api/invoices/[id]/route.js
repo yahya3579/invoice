@@ -20,18 +20,57 @@ export async function GET(req, { params }) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const invoice = await prisma.invoice.findUnique({
     where: { id: Number(id) },
-    include: { items: true },
+    include: { 
+      items: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          fbrApiToken: true,
+          profile: {
+            select: {
+              invoiceType: true,
+              invoiceDate: true,
+              sellerNTNCNIC: true,
+              sellerBusinessName: true,
+              sellerProvince: true,
+              sellerAddress: true
+            }
+          }
+        }
+      },
+      organization: {
+        select: {
+          id: true,
+          name: true,
+          ntn: true,
+          address: true,
+          businessType: true,
+          phone: true,
+          email: true
+        }
+      }
+    },
   });
   if (!invoice) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (user.role !== "admin" && invoice.userId !== user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+  
   // Normalize Decimal values
   const norm = {
     ...invoice,
     subtotal: invoice.subtotal != null ? parseFloat(invoice.subtotal) : 0,
     taxAmount: invoice.taxAmount != null ? parseFloat(invoice.taxAmount) : 0,
     totalAmount: invoice.totalAmount != null ? parseFloat(invoice.totalAmount) : 0,
+    // Ensure FBR fields are included
+    invoiceNumber: invoice.invoiceNumber,
+    invoiceType: invoice.invoiceType,
+    sroScheduleNo: invoice.sroScheduleNo,
+    salesTaxWithheldAtSource: invoice.salesTaxWithheldAtSource != null ? parseFloat(invoice.salesTaxWithheldAtSource) : null,
+    furtherTax: invoice.furtherTax != null ? parseFloat(invoice.furtherTax) : null,
+    fixedNotifiedValueOrRetailPrice: invoice.fixedNotifiedValueOrRetailPrice != null ? parseFloat(invoice.fixedNotifiedValueOrRetailPrice) : null,
     items: invoice.items.map((it) => ({
       ...it,
       quantity: it.quantity != null ? parseFloat(it.quantity) : 0,
@@ -39,6 +78,10 @@ export async function GET(req, { params }) {
       taxRate: it.taxRate != null ? parseFloat(it.taxRate) : 0,
       taxAmount: it.taxAmount != null ? parseFloat(it.taxAmount) : 0,
       totalAmount: it.totalAmount != null ? parseFloat(it.totalAmount) : 0,
+      // Ensure item FBR fields are included
+      rate: it.rate,
+      uom: it.uom,
+      sroItemSerialNo: it.sroItemSerialNo,
     })),
   };
   return NextResponse.json({ success: true, data: norm });

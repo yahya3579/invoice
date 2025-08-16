@@ -14,6 +14,16 @@ export default function CreateInvoicePage() {
   const router = useRouter();
   const [sellerProfile, setSellerProfile] = useState(null);
   const [form, setForm] = useState({
+    invoiceNumber: "",
+    irn: "",
+    invoiceType: "",
+    sroScheduleNo: "",
+    salesTaxWithheldAtSource: "",
+    furtherTax: "",
+    fixedNotifiedValueOrRetailPrice: "",
+    invoiceDate: new Date().toISOString().slice(0,10),
+    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0,10), // 30 days from now
+    currency: "PKR",
     buyerNTNCNIC: "",
     buyerBusinessName: "",
     buyerProvince: "",
@@ -27,7 +37,7 @@ export default function CreateInvoicePage() {
       hsCode: "",
       productDescription: "",
       rate: "",
-      uoM: "",
+      uom: "",
       quantity: 1,
       totalValues: 0,
       valueSalesExcludingST: 0,
@@ -70,7 +80,7 @@ export default function CreateInvoicePage() {
         hsCode: "",
         productDescription: "",
         rate: "",
-        uoM: "",
+        uom: "",
         quantity: 1,
         totalValues: 0,
         valueSalesExcludingST: 0,
@@ -103,19 +113,84 @@ export default function CreateInvoicePage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const payload = { ...form, items };
-      const v = await fbrApi.validate(payload);
-      if (!v.success) {
-        toast.error(`Validation errors: ${v.errors.join(', ')}`);
+      // Ensure all required fields are present
+      const requiredFields = [
+        'buyerNTNCNIC', 
+        'buyerBusinessName',
+        'invoiceNumber',
+        'invoiceType',
+        'sroScheduleNo'
+      ];
+      
+      const missingFields = requiredFields.filter(field => {
+        const value = form[field];
+        return !value || (typeof value === 'string' && value.trim() === '');
+      });
+      
+      if (missingFields.length > 0) {
+        toast.error(`Please fill in all required fields: ${missingFields.join(', ')}`);
         setSaving(false);
         return;
       }
+
+      // Ensure all items have required fields
+      const missingItemFields = [];
+      items.forEach((item, index) => {
+        if (!item.productDescription) missingItemFields.push(`Item ${index + 1} Product Description`);
+        if (!item.valueSalesExcludingST || item.valueSalesExcludingST <= 0) missingItemFields.push(`Item ${index + 1} Value Sales Excluding ST`);
+      });
+
+      if (missingItemFields.length > 0) {
+        toast.error(`Please fill in all required item fields: ${missingItemFields.join(', ')}`);
+        setSaving(false);
+        return;
+      }
+
+      const payload = { 
+        buyerNTNCNIC: form.buyerNTNCNIC && form.buyerNTNCNIC.trim() !== '' ? form.buyerNTNCNIC : null,
+        buyerBusinessName: form.buyerBusinessName && form.buyerBusinessName.trim() !== '' ? form.buyerBusinessName : null,
+        buyerProvince: form.buyerProvince && form.buyerProvince.trim() !== '' ? form.buyerProvince : null,
+        buyerAddress: form.buyerAddress && form.buyerAddress.trim() !== '' ? form.buyerAddress : null,
+        buyerRegistrationType: form.buyerRegistrationType && form.buyerRegistrationType.trim() !== '' ? form.buyerRegistrationType : null,
+        invoiceRefNo: form.invoiceRefNo && form.invoiceRefNo.trim() !== '' ? form.invoiceRefNo : null,
+        scenarioId: form.scenarioId && form.scenarioId.trim() !== '' ? form.scenarioId : null,
+        // Add the missing fields
+        invoiceNumber: form.invoiceNumber && form.invoiceNumber.trim() !== '' ? form.invoiceNumber : null,
+        irn: form.irn && form.irn.trim() !== '' ? form.irn : null,
+        invoiceType: form.invoiceType && form.invoiceType.trim() !== '' ? form.invoiceType : null,
+        sroScheduleNo: form.sroScheduleNo && form.sroScheduleNo.trim() !== '' ? form.sroScheduleNo : null,
+        salesTaxWithheldAtSource: form.salesTaxWithheldAtSource && form.salesTaxWithheldAtSource !== '' ? Number(form.salesTaxWithheldAtSource) : null,
+        furtherTax: form.furtherTax && form.furtherTax !== '' ? Number(form.furtherTax) : null,
+        fixedNotifiedValueOrRetailPrice: form.fixedNotifiedValueOrRetailPrice && form.fixedNotifiedValueOrRetailPrice !== '' ? Number(form.fixedNotifiedValueOrRetailPrice) : null,
+        invoiceDate: form.invoiceDate && form.invoiceDate.trim() !== '' ? form.invoiceDate : null,
+        dueDate: form.dueDate && form.dueDate.trim() !== '' ? form.dueDate : null,
+        currency: form.currency || 'PKR',
+        items,
+        // Calculate totals properly
+        subtotal: items.reduce((sum, item) => sum + (Number(item.valueSalesExcludingST) || 0), 0),
+        taxAmount: items.reduce((sum, item) => sum + (Number(item.salesTaxApplicable || 0) * Number(item.valueSalesExcludingST || 0) / 100), 0),
+        totalAmount: items.reduce((sum, item) => sum + (Number(item.totalValues) || 0), 0)
+      };
+
+      console.log('Creating invoice with payload:', payload);
+      console.log('Form state:', form);
+      console.log('Items state:', items);
+      console.log('Individual field values:');
+      console.log('- invoiceNumber:', form.invoiceNumber, 'Type:', typeof form.invoiceNumber, 'Length:', form.invoiceNumber ? form.invoiceNumber.length : 0);
+      console.log('- invoiceType:', form.invoiceType, 'Type:', typeof form.invoiceType, 'Length:', form.invoiceType ? form.invoiceType.length : 0);
+      console.log('- sroScheduleNo:', form.sroScheduleNo, 'Type:', typeof form.sroScheduleNo, 'Length:', form.sroScheduleNo ? form.sroScheduleNo.length : 0);
+      console.log('- salesTaxWithheldAtSource:', form.salesTaxWithheldAtSource, 'Type:', typeof form.salesTaxWithheldAtSource);
+      console.log('- furtherTax:', form.furtherTax, 'Type:', typeof form.furtherTax);
+      console.log('- fixedNotifiedValueOrRetailPrice:', form.fixedNotifiedValueOrRetailPrice, 'Type:', typeof form.fixedNotifiedValueOrRetailPrice);
+      console.log('- dueDate:', form.dueDate, 'Type:', typeof form.dueDate, 'Length:', form.dueDate ? form.dueDate.length : 0);
+      
       const res = await invoiceApi.create(payload);
       toast.success("Invoice saved as draft");
       setTimeout(() => {
         router.push(`/user/invoices/${res.data.id}`);
       }, 800);
     } catch (e) {
+      console.error('Error creating invoice:', e);
       toast.error("Error while creating invoice");
     } finally {
       setSaving(false);
@@ -171,6 +246,29 @@ export default function CreateInvoicePage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid md:grid-cols-2 gap-4">
               <div>
+                <Label>Invoice Number *</Label>
+                <Input value={form.invoiceNumber || ''} onChange={(e) => setField('invoiceNumber', e.target.value)} />
+              </div>
+              <div>
+                <Label>IRN</Label>
+                <Input value={form.irn || ''} onChange={(e) => setField('irn', e.target.value)}  />
+              </div>
+              <div>
+                <Label>Invoice Type *</Label>
+                <select 
+                  value={form.invoiceType || ''} 
+                  onChange={(e) => setField('invoiceType', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                >
+                  <option value="">Select Invoice Type</option>
+                  <option value="Sale Invoice">Sale Invoice</option>
+                  <option value="Purchase Invoice">Purchase Invoice</option>
+                  <option value="Credit Note">Credit Note</option>
+                  <option value="Debit Note">Debit Note</option>
+                </select>
+              </div>
+              <div>
                 <Label>Buyer NTN/CNIC</Label>
                 <Input value={form.buyerNTNCNIC} onChange={(e) => setField('buyerNTNCNIC', e.target.value)} required />
               </div>
@@ -198,6 +296,42 @@ export default function CreateInvoicePage() {
                 <Label>Scenario Id</Label>
                 <Input value={form.scenarioId} onChange={(e) => setField('scenarioId', e.target.value)} />
               </div>
+              <div>
+                <Label>SRO/Schedule Number *</Label>
+                <Input value={form.sroScheduleNo || ''} onChange={(e) => setField('sroScheduleNo', e.target.value)} />
+              </div>
+              <div>
+                <Label>ST Withheld at Source *</Label>
+                <Input type="number" step="0.01" value={form.salesTaxWithheldAtSource || ''} onChange={(e) => setField('salesTaxWithheldAtSource', e.target.value)} />
+              </div>
+              <div>
+                <Label>Further Tax *</Label>
+                <Input type="number" step="0.01" value={form.furtherTax || ''} onChange={(e) => setField('furtherTax', e.target.value)} />
+              </div>
+              <div>
+                <Label>Fixed/Notified Value *</Label>
+                <Input type="number" step="0.01" value={form.fixedNotifiedValueOrRetailPrice || ''} onChange={(e) => setField('fixedNotifiedValueOrRetailPrice', e.target.value)} />
+              </div>
+              <div>
+                <Label>Invoice Date *</Label>
+                <Input type="date" value={form.invoiceDate || new Date().toISOString().slice(0,10)} onChange={(e) => setField('invoiceDate', e.target.value)} required />
+              </div>
+              <div>
+                <Label>Due Date</Label>
+                <Input type="date" value={form.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0,10)} onChange={(e) => setField('dueDate', e.target.value)} />
+              </div>
+              <div>
+                <Label>Currency</Label>
+                <select 
+                  value={form.currency || 'PKR'} 
+                  onChange={(e) => setField('currency', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="PKR">PKR (Pakistani Rupee)</option>
+                  <option value="USD">USD (US Dollar)</option>
+                  <option value="EUR">EUR (Euro)</option>
+                </select>
+              </div>
             </div>
 
             <div className="space-y-4">
@@ -221,7 +355,7 @@ export default function CreateInvoicePage() {
                   </div>
                   <div>
                     <Label>Unit of Measure (UoM)</Label>
-                    <Input value={it.uoM} onChange={(e) => updateItem(idx, 'uoM', e.target.value)} />
+                    <Input value={it.uom} onChange={(e) => updateItem(idx, 'uom', e.target.value)} />
                   </div>
                   <div>
                     <Label>Quantity</Label>
